@@ -1,0 +1,418 @@
+
+# Create the complete Sesath Photography website
+# I'll create all three files: index.html, style.css, and script.js
+
+import os
+
+output_dir = "/mnt/agents/output/"
+os.makedirs(output_dir, exist_ok=True)
+
+# ============================================
+# INDEX.HTML
+# ============================================
+index_html = '''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sesath Photography | Wildlife Photographer Sri Lanka</title>
+    <meta name="description" content="Professional wildlife photography by Sesath Semika Sellapperuma. Stunning Sri Lankan wildlife photos, international photo sales, and wildlife tour guiding services.">
+    <meta name="keywords" content="Sesath Photography, Sesath Semika Sellapperuma, wildlife photography, Sri Lanka wildlife, nature photography, wildlife tours, Sri Lanka">
+    <meta name="author" content="Sesath Semika Sellapperuma">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Sesath Photography | Wildlife Photographer Sri Lanka">
+    <meta property="og:description" content="Professional wildlife photography showcasing the beauty of Sri Lankan wildlife.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://sesathphotography.com">
+    <meta property="og:image" content="">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Sesath Photography | Wildlife Photographer Sri Lanka">
+    <meta name="twitter:description" content="Professional wildlife photography showcasing the beauty of Sri Lankan wildlife.">
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        "name": "Sesath Semika Sellapperuma",
+        "url": "https://sesathphotography.com",
+        "jobTitle": "Wildlife Photographer",
+        "description": "Professional wildlife photographer based in Sri Lanka, offering photo sales and wildlife tour guiding services.",
+        "sameAs": [
+            "https://www.instagram.com/sesath_photography"
+        ],
+        "contactPoint": {
+            "@type": "ContactPoint",
+            "telephone": "+94716521691",
+            "contactType": "Customer Service",
+            "availableLanguage": ["English", "Sinhala"]
+        }
+    }
+    </script>
+    
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Background Layer -->
+    <div id="bg-layer"></div>
+    
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <h1>Sesath Photography</h1>
+            <span class="tagline">Wildlife of Sri Lanka</span>
+        </div>
+        <div class="nav-links">
+            <a href="#gallery" class="nav-link">Gallery</a>
+            <a href="#about" class="nav-link">About</a>
+            <a href="#contact" class="nav-link">Contact</a>
+            <button id="host-login-btn" class="host-login-btn" title="Host Login">
+                <i class="fas fa-lock"></i>
+            </button>
+        </div>
+        <button class="mobile-menu-btn" id="mobile-menu-btn">
+            <i class="fas fa-bars"></i>
+        </button>
+    </nav>
+    
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobile-menu">
+        <a href="#gallery" class="mobile-link">Gallery</a>
+        <a href="#about" class="mobile-link">About</a>
+        <a href="#contact" class="mobile-link">Contact</a>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+        <div class="hero-content">
+            <h2 class="hero-title">Capturing the Wild</h2>
+            <p class="hero-subtitle">Through the lens of Sesath Semika Sellapperuma</p>
+            <div class="hero-badges">
+                <span class="badge"><i class="fas fa-camera"></i> Wildlife Photography</span>
+                <span class="badge"><i class="fas fa-globe"></i> International Sales</span>
+                <span class="badge"><i class="fas fa-binoculars"></i> Tour Guiding</span>
+            </div>
+            <a href="#gallery" class="cta-btn">Explore Gallery</a>
+        </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section class="gallery-section" id="gallery">
+        <div class="section-header">
+            <h2>Photo Gallery</h2>
+            <p>Wildlife moments captured in Sri Lanka</p>
+        </div>
+        
+        <div class="gallery-filters">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="mammals">Mammals</button>
+            <button class="filter-btn" data-filter="birds">Birds</button>
+            <button class="filter-btn" data-filter="reptiles">Reptiles</button>
+            <button class="filter-btn" data-filter="landscapes">Landscapes</button>
+        </div>
+        
+        <div class="gallery-grid" id="gallery-grid">
+            <!-- Photos will be loaded here dynamically -->
+            <div class="empty-gallery" id="empty-gallery">
+                <i class="fas fa-images"></i>
+                <h3>Gallery Coming Soon</h3>
+                <p>Amazing wildlife photos will be added here. Check back soon!</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="about-section" id="about">
+        <div class="section-header">
+            <h2>About</h2>
+        </div>
+        <div class="about-content">
+            <div class="about-text">
+                <h3>Sesath Semika Sellapperuma</h3>
+                <p id="about-description">Professional wildlife photographer passionate about capturing the breathtaking beauty of Sri Lankan wildlife. Through my lens, I bring the untamed wilderness closer to the world.</p>
+                <div class="services">
+                    <div class="service-card">
+                        <i class="fas fa-camera-retro"></i>
+                        <h4>Photo Sales</h4>
+                        <p>High-quality wildlife prints available for international purchase.</p>
+                    </div>
+                    <div class="service-card">
+                        <i class="fas fa-route"></i>
+                        <h4>Wildlife Tours</h4>
+                        <p>Guided wildlife photography tours across Sri Lanka's best national parks.</p>
+                    </div>
+                    <div class="service-card">
+                        <i class="fas fa-paw"></i>
+                        <h4>Conservation</h4>
+                        <p>Supporting wildlife conservation through visual storytelling.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="contact-section" id="contact">
+        <div class="section-header">
+            <h2>Get in Touch</h2>
+            <p>Let's connect for photography, tours, or collaborations</p>
+        </div>
+        <div class="contact-content">
+            <div class="contact-card">
+                <div class="contact-item">
+                    <i class="fab fa-whatsapp"></i>
+                    <div>
+                        <h4>WhatsApp</h4>
+                        <a href="https://wa.me/94716521691" target="_blank">+94 716 521 691</a>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <i class="fab fa-instagram"></i>
+                    <div>
+                        <h4>Instagram</h4>
+                        <a href="https://www.instagram.com/sesath_photography" target="_blank">@sesath_photography</a>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-phone"></i>
+                    <div>
+                        <h4>Phone</h4>
+                        <a href="tel:+94716521691">+94 716 521 691</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h3>Sesath Photography</h3>
+                <p>Wildlife Photographer | Sri Lanka</p>
+            </div>
+            <div class="footer-social">
+                <a href="https://wa.me/94716521691" target="_blank" class="social-btn whatsapp">
+                    <i class="fab fa-whatsapp"></i>
+                </a>
+                <a href="https://www.instagram.com/sesath_photography" target="_blank" class="social-btn instagram">
+                    <i class="fab fa-instagram"></i>
+                </a>
+            </div>
+            <p class="copyright">&copy; 2026 Sesath Semika Sellapperuma. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Floating WhatsApp Button -->
+    <a href="https://wa.me/94716521691" target="_blank" class="floating-whatsapp" title="Chat on WhatsApp">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
+    <!-- Floating Instagram Button -->
+    <a href="https://www.instagram.com/sesath_photography" target="_blank" class="floating-instagram" title="Follow on Instagram">
+        <i class="fab fa-instagram"></i>
+    </a>
+
+    <!-- Share Button -->
+    <button class="floating-share" id="share-btn" title="Share Website">
+        <i class="fas fa-share-alt"></i>
+    </button>
+
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox">
+        <button class="lightbox-close" id="lightbox-close"><i class="fas fa-times"></i></button>
+        <button class="lightbox-nav lightbox-prev" id="lightbox-prev"><i class="fas fa-chevron-left"></i></button>
+        <button class="lightbox-nav lightbox-next" id="lightbox-next"><i class="fas fa-chevron-right"></i></button>
+        <div class="lightbox-content">
+            <img src="" alt="" id="lightbox-img">
+            <div class="lightbox-info">
+                <h3 id="lightbox-title"></h3>
+                <p id="lightbox-desc"></p>
+                <div class="lightbox-actions">
+                    <button class="like-btn" id="lightbox-like"><i class="far fa-heart"></i> <span id="lightbox-like-count">0</span></button>
+                    <button class="comment-toggle" id="lightbox-comment-toggle"><i class="far fa-comment"></i> Comments</button>
+                </div>
+                <div class="comments-section" id="lightbox-comments">
+                    <div class="comments-list" id="comments-list"></div>
+                    <div class="comment-form">
+                        <input type="text" id="comment-name" placeholder="Your name" maxlength="50">
+                        <textarea id="comment-text" placeholder="Write a comment..." maxlength="500"></textarea>
+                        <button id="comment-submit">Post Comment</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Host Login Modal -->
+    <div class="modal" id="login-modal">
+        <div class="modal-content">
+            <button class="modal-close" id="login-close"><i class="fas fa-times"></i></button>
+            <h2><i class="fas fa-lock"></i> Host Login</h2>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" placeholder="Enter password" required>
+                </div>
+                <button type="submit" class="btn-primary">Login</button>
+                <p class="login-error" id="login-error">Incorrect password. Please try again.</p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Host Dashboard -->
+    <div class="dashboard" id="dashboard">
+        <div class="dashboard-sidebar">
+            <div class="dashboard-header">
+                <h2><i class="fas fa-cog"></i> Host Dashboard</h2>
+                <button class="dashboard-close" id="dashboard-close"><i class="fas fa-times"></i></button>
+            </div>
+            <nav class="dashboard-nav">
+                <button class="dash-nav-btn active" data-tab="upload">
+                    <i class="fas fa-upload"></i> Upload Photos
+                </button>
+                <button class="dash-nav-btn" data-tab="manage">
+                    <i class="fas fa-images"></i> Manage Gallery
+                </button>
+                <button class="dash-nav-btn" data-tab="comments">
+                    <i class="fas fa-comments"></i> Manage Comments
+                </button>
+                <button class="dash-nav-btn" data-tab="appearance">
+                    <i class="fas fa-paint-brush"></i> Appearance
+                </button>
+                <button class="dash-nav-btn" data-tab="info">
+                    <i class="fas fa-info-circle"></i> Website Info
+                </button>
+            </nav>
+            <button class="logout-btn" id="logout-btn">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+        <div class="dashboard-main">
+            <!-- Upload Tab -->
+            <div class="dash-tab active" id="tab-upload">
+                <h3>Upload New Photo</h3>
+                <div class="upload-area" id="upload-area">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Drag & drop photos here or click to browse</p>
+                    <input type="file" id="photo-input" accept="image/*" multiple hidden>
+                </div>
+                <div class="upload-preview" id="upload-preview"></div>
+                <div class="upload-form">
+                    <div class="form-group">
+                        <label>Photo Title</label>
+                        <input type="text" id="upload-title" placeholder="e.g., Leopard in Yala">
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="upload-desc" placeholder="Brief description of the photo..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="upload-category">
+                            <option value="mammals">Mammals</option>
+                            <option value="birds">Birds</option>
+                            <option value="reptiles">Reptiles</option>
+                            <option value="landscapes">Landscapes</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <button class="btn-primary" id="upload-submit">Upload Photo</button>
+                </div>
+            </div>
+
+            <!-- Manage Gallery Tab -->
+            <div class="dash-tab" id="tab-manage">
+                <h3>Manage Gallery</h3>
+                <div class="manage-grid" id="manage-grid">
+                    <p class="empty-msg">No photos uploaded yet.</p>
+                </div>
+            </div>
+
+            <!-- Manage Comments Tab -->
+            <div class="dash-tab" id="tab-comments">
+                <h3>Manage Comments</h3>
+                <div class="comments-manage-list" id="comments-manage-list">
+                    <p class="empty-msg">No comments yet.</p>
+                </div>
+            </div>
+
+            <!-- Appearance Tab -->
+            <div class="dash-tab" id="tab-appearance">
+                <h3>Customize Appearance</h3>
+                <div class="appearance-options">
+                    <div class="form-group">
+                        <label>Background Image</label>
+                        <div class="bg-upload-area" id="bg-upload-area">
+                            <i class="fas fa-image"></i>
+                            <p>Click to upload background image</p>
+                            <input type="file" id="bg-input" accept="image/*" hidden>
+                        </div>
+                        <div class="bg-preview" id="bg-preview"></div>
+                        <button class="btn-secondary" id="remove-bg-btn">Remove Background Image</button>
+                    </div>
+                    <div class="form-group">
+                        <label>Background Color</label>
+                        <div class="color-picker-wrapper">
+                            <input type="color" id="bg-color-picker" value="#0a0a0a">
+                            <span id="bg-color-value">#0a0a0a</span>
+                        </div>
+                        <button class="btn-primary" id="apply-bg-color">Apply Background Color</button>
+                    </div>
+                    <div class="form-group">
+                        <label>Overlay Opacity</label>
+                        <input type="range" id="overlay-opacity" min="0" max="100" value="70">
+                        <span id="overlay-value">70%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Website Info Tab -->
+            <div class="dash-tab" id="tab-info">
+                <h3>Edit Website Information</h3>
+                <div class="info-form">
+                    <div class="form-group">
+                        <label>Website Title</label>
+                        <input type="text" id="info-title" value="Sesath Photography">
+                    </div>
+                    <div class="form-group">
+                        <label>Tagline</label>
+                        <input type="text" id="info-tagline" value="Wildlife of Sri Lanka">
+                    </div>
+                    <div class="form-group">
+                        <label>About Description</label>
+                        <textarea id="info-about" rows="5">Professional wildlife photographer passionate about capturing the breathtaking beauty of Sri Lankan wildlife. Through my lens, I bring the untamed wilderness closer to the world.</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone / WhatsApp</label>
+                        <input type="text" id="info-phone" value="+94 716 521 691">
+                    </div>
+                    <div class="form-group">
+                        <label>Instagram URL</label>
+                        <input type="text" id="info-instagram" value="https://www.instagram.com/sesath_photography">
+                    </div>
+                    <button class="btn-primary" id="save-info-btn">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toast-message">Success!</span>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>'''
+
+with open(os.path.join(output_dir, "index.html"), "w", encoding="utf-8") as f:
+    f.write(index_html)
+
+print("index.html created successfully!")

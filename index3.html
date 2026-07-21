@@ -1,0 +1,813 @@
+
+# ============================================
+# SCRIPT.JS
+# ============================================
+script_js = '''// ===== Sesath Photography - Main JavaScript =====
+
+// ===== Data Store (using localStorage) =====
+const DataStore = {
+    get(key, defaultVal = null) {
+        try {
+            const data = localStorage.getItem(`sesath_${key}`);
+            return data ? JSON.parse(data) : defaultVal;
+        } catch {
+            return defaultVal;
+        }
+    },
+    set(key, value) {
+        localStorage.setItem(`sesath_${key}`, JSON.stringify(value));
+    },
+    remove(key) {
+        localStorage.removeItem(`sesath_${key}`);
+    }
+};
+
+// ===== Initialize Data =====
+function initData() {
+    if (!DataStore.get('photos')) DataStore.set('photos', []);
+    if (!DataStore.get('comments')) DataStore.set('comments', {});
+    if (!DataStore.get('likes')) DataStore.set('likes', {});
+    if (!DataStore.get('liked_photos')) DataStore.set('liked_photos', []);
+    if (!DataStore.get('settings')) {
+        DataStore.set('settings', {
+            bgColor: '#0a0a0a',
+            bgImage: null,
+            overlayOpacity: 70,
+            title: 'Sesath Photography',
+            tagline: 'Wildlife of Sri Lanka',
+            about: 'Professional wildlife photographer passionate about capturing the breathtaking beauty of Sri Lankan wildlife. Through my lens, I bring the untamed wilderness closer to the world.',
+            phone: '+94 716 521 691',
+            instagram: 'https://www.instagram.com/sesath_photography'
+        });
+    }
+}
+
+// ===== DOM Elements =====
+const els = {
+    bgLayer: document.getElementById('bg-layer'),
+    galleryGrid: document.getElementById('gallery-grid'),
+    emptyGallery: document.getElementById('empty-gallery'),
+    lightbox: document.getElementById('lightbox'),
+    lightboxImg: document.getElementById('lightbox-img'),
+    lightboxTitle: document.getElementById('lightbox-title'),
+    lightboxDesc: document.getElementById('lightbox-desc'),
+    lightboxLike: document.getElementById('lightbox-like'),
+    lightboxLikeCount: document.getElementById('lightbox-like-count'),
+    lightboxCommentToggle: document.getElementById('lightbox-comment-toggle'),
+    lightboxComments: document.getElementById('lightbox-comments'),
+    commentsList: document.getElementById('comments-list'),
+    commentName: document.getElementById('comment-name'),
+    commentText: document.getElementById('comment-text'),
+    commentSubmit: document.getElementById('comment-submit'),
+    loginModal: document.getElementById('login-modal'),
+    loginForm: document.getElementById('login-form'),
+    loginPassword: document.getElementById('login-password'),
+    loginError: document.getElementById('login-error'),
+    hostLoginBtn: document.getElementById('host-login-btn'),
+    loginClose: document.getElementById('login-close'),
+    dashboard: document.getElementById('dashboard'),
+    dashboardClose: document.getElementById('dashboard-close'),
+    logoutBtn: document.getElementById('logout-btn'),
+    dashNavBtns: document.querySelectorAll('.dash-nav-btn'),
+    dashTabs: document.querySelectorAll('.dash-tab'),
+    uploadArea: document.getElementById('upload-area'),
+    photoInput: document.getElementById('photo-input'),
+    uploadPreview: document.getElementById('upload-preview'),
+    uploadTitle: document.getElementById('upload-title'),
+    uploadDesc: document.getElementById('upload-desc'),
+    uploadCategory: document.getElementById('upload-category'),
+    uploadSubmit: document.getElementById('upload-submit'),
+    manageGrid: document.getElementById('manage-grid'),
+    commentsManageList: document.getElementById('comments-manage-list'),
+    bgUploadArea: document.getElementById('bg-upload-area'),
+    bgInput: document.getElementById('bg-input'),
+    bgPreview: document.getElementById('bg-preview'),
+    removeBgBtn: document.getElementById('remove-bg-btn'),
+    bgColorPicker: document.getElementById('bg-color-picker'),
+    bgColorValue: document.getElementById('bg-color-value'),
+    applyBgColor: document.getElementById('apply-bg-color'),
+    overlayOpacity: document.getElementById('overlay-opacity'),
+    overlayValue: document.getElementById('overlay-value'),
+    infoTitle: document.getElementById('info-title'),
+    infoTagline: document.getElementById('info-tagline'),
+    infoAbout: document.getElementById('info-about'),
+    infoPhone: document.getElementById('info-phone'),
+    infoInstagram: document.getElementById('info-instagram'),
+    saveInfoBtn: document.getElementById('save-info-btn'),
+    shareBtn: document.getElementById('share-btn'),
+    toast: document.getElementById('toast'),
+    toastMessage: document.getElementById('toast-message'),
+    mobileMenuBtn: document.getElementById('mobile-menu-btn'),
+    mobileMenu: document.getElementById('mobile-menu'),
+    filterBtns: document.querySelectorAll('.filter-btn'),
+    aboutDescription: document.getElementById('about-description')
+};
+
+// ===== State =====
+let currentPhotoId = null;
+let uploadedFiles = [];
+let currentFilter = 'all';
+
+// ===== Helper Functions =====
+function generateId() {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+}
+
+function formatDate(dateStr) {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function showToast(message, type = 'success') {
+    els.toastMessage.textContent = message;
+    els.toast.querySelector('i').className = type === 'error' ? 'fas fa-times-circle' : 'fas fa-check-circle';
+    els.toast.style.background = type === 'error' ? 'var(--danger)' : 'var(--success)';
+    els.toast.classList.add('active');
+    setTimeout(() => els.toast.classList.remove('active'), 3000);
+}
+
+function fileToBase64(file) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.readAsDataURL(file);
+    });
+}
+
+// ===== Settings =====
+function applySettings() {
+    const settings = DataStore.get('settings', {});
+    
+    // Background
+    if (settings.bgImage) {
+        els.bgLayer.style.backgroundImage = `url(${settings.bgImage})`;
+    } else {
+        els.bgLayer.style.backgroundImage = 'none';
+    }
+    
+    els.bgLayer.style.backgroundColor = settings.bgColor || '#0a0a0a';
+    
+    const opacity = (settings.overlayOpacity || 70) / 100;
+    const overlayEl = els.bgLayer.querySelector('::after');
+    // Update overlay via CSS custom property or direct style
+    document.documentElement.style.setProperty('--overlay', `rgba(0, 0, 0, ${opacity})`);
+    
+    // Update text content
+    document.querySelector('.nav-brand h1').textContent = settings.title || 'Sesath Photography';
+    document.querySelector('.nav-brand .tagline').textContent = settings.tagline || 'Wildlife of Sri Lanka';
+    els.aboutDescription.textContent = settings.about || '';
+    
+    // Update contact links
+    document.querySelectorAll('a[href^="https://wa.me"]').forEach(a => {
+        a.href = `https://wa.me/${(settings.phone || '+94716521691').replace(/\\D/g, '')}`;
+    });
+    document.querySelectorAll('a[href^="https://www.instagram.com"]').forEach(a => {
+        a.href = settings.instagram || 'https://www.instagram.com/sesath_photography';
+    });
+    document.querySelectorAll('a[href^="tel:"]').forEach(a => {
+        a.href = `tel:${(settings.phone || '+94716521691').replace(/\\D/g, '')}`;
+    });
+    
+    // Update info form
+    els.infoTitle.value = settings.title || '';
+    els.infoTagline.value = settings.tagline || '';
+    els.infoAbout.value = settings.about || '';
+    els.infoPhone.value = settings.phone || '';
+    els.infoInstagram.value = settings.instagram || '';
+    els.bgColorPicker.value = settings.bgColor || '#0a0a0a';
+    els.bgColorValue.textContent = settings.bgColor || '#0a0a0a';
+    els.overlayOpacity.value = settings.overlayOpacity || 70;
+    els.overlayValue.textContent = `${settings.overlayOpacity || 70}%`;
+    
+    // Update bg preview
+    if (settings.bgImage) {
+        els.bgPreview.innerHTML = `<img src="${settings.bgImage}" alt="Background">`;
+    } else {
+        els.bgPreview.innerHTML = '';
+    }
+}
+
+// ===== Gallery =====
+function renderGallery() {
+    const photos = DataStore.get('photos', []);
+    const likedPhotos = DataStore.get('liked_photos', []);
+    const likes = DataStore.get('likes', {});
+    
+    if (photos.length === 0) {
+        els.galleryGrid.innerHTML = '';
+        els.galleryGrid.appendChild(els.emptyGallery);
+        els.emptyGallery.style.display = 'block';
+        return;
+    }
+    
+    els.emptyGallery.style.display = 'none';
+    
+    const filtered = currentFilter === 'all' 
+        ? photos 
+        : photos.filter(p => p.category === currentFilter);
+    
+    if (filtered.length === 0) {
+        els.galleryGrid.innerHTML = `
+            <div class="empty-gallery" style="grid-column: 1/-1;">
+                <i class="fas fa-filter"></i>
+                <h3>No photos in this category</h3>
+                <p>Photos will appear here once uploaded.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    els.galleryGrid.innerHTML = filtered.map(photo => {
+        const isLiked = likedPhotos.includes(photo.id);
+        const likeCount = likes[photo.id] || 0;
+        return `
+            <div class="gallery-item" data-id="${photo.id}" data-category="${photo.category}">
+                <img src="${photo.src}" alt="${photo.title}" loading="lazy">
+                <div class="gallery-item-overlay">
+                    <h4 class="gallery-item-title">${photo.title}</h4>
+                    <div class="gallery-item-meta">
+                        <span>${photo.category}</span>
+                        <span class="gallery-item-likes ${isLiked ? 'liked' : ''}">
+                            <i class="${isLiked ? 'fas' : 'far'} fa-heart"></i> ${likeCount}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    // Add click handlers
+    document.querySelectorAll('.gallery-item').forEach(item => {
+        item.addEventListener('click', () => openLightbox(item.dataset.id));
+    });
+}
+
+// ===== Lightbox =====
+function openLightbox(photoId) {
+    const photos = DataStore.get('photos', []);
+    const photo = photos.find(p => p.id === photoId);
+    if (!photo) return;
+    
+    currentPhotoId = photoId;
+    els.lightboxImg.src = photo.src;
+    els.lightboxImg.alt = photo.title;
+    els.lightboxTitle.textContent = photo.title;
+    els.lightboxDesc.textContent = photo.description || '';
+    
+    updateLikeButton();
+    renderComments();
+    els.lightboxComments.classList.remove('active');
+    
+    els.lightbox.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+    els.lightbox.classList.remove('active');
+    document.body.style.overflow = '';
+    currentPhotoId = null;
+}
+
+function navigateLightbox(direction) {
+    const photos = DataStore.get('photos', []);
+    const filtered = currentFilter === 'all' 
+        ? photos 
+        : photos.filter(p => p.category === currentFilter);
+    
+    const currentIndex = filtered.findIndex(p => p.id === currentPhotoId);
+    if (currentIndex === -1) return;
+    
+    let newIndex;
+    if (direction === 'next') {
+        newIndex = (currentIndex + 1) % filtered.length;
+    } else {
+        newIndex = (currentIndex - 1 + filtered.length) % filtered.length;
+    }
+    
+    openLightbox(filtered[newIndex].id);
+}
+
+// ===== Likes =====
+function updateLikeButton() {
+    const likedPhotos = DataStore.get('liked_photos', []);
+    const likes = DataStore.get('likes', {});
+    const isLiked = likedPhotos.includes(currentPhotoId);
+    const count = likes[currentPhotoId] || 0;
+    
+    els.lightboxLike.classList.toggle('liked', isLiked);
+    els.lightboxLike.innerHTML = `<i class="${isLiked ? 'fas' : 'far'} fa-heart"></i> <span>${count}</span>`;
+}
+
+function toggleLike() {
+    if (!currentPhotoId) return;
+    
+    let likedPhotos = DataStore.get('liked_photos', []);
+    let likes = DataStore.get('likes', {});
+    
+    const isLiked = likedPhotos.includes(currentPhotoId);
+    
+    if (isLiked) {
+        likedPhotos = likedPhotos.filter(id => id !== currentPhotoId);
+        likes[currentPhotoId] = Math.max(0, (likes[currentPhotoId] || 0) - 1);
+    } else {
+        likedPhotos.push(currentPhotoId);
+        likes[currentPhotoId] = (likes[currentPhotoId] || 0) + 1;
+    }
+    
+    DataStore.set('liked_photos', likedPhotos);
+    DataStore.set('likes', likes);
+    
+    updateLikeButton();
+    renderGallery();
+}
+
+// ===== Comments =====
+function renderComments() {
+    const comments = DataStore.get('comments', {});
+    const photoComments = comments[currentPhotoId] || [];
+    
+    if (photoComments.length === 0) {
+        els.commentsList.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 20px;">No comments yet. Be the first!</p>';
+        return;
+    }
+    
+    els.commentsList.innerHTML = photoComments.map(c => `
+        <div class="comment-item">
+            <div class="comment-header">
+                <span class="comment-author">${escapeHtml(c.name)}</span>
+                <span class="comment-date">${formatDate(c.date)}</span>
+            </div>
+            <p class="comment-text">${escapeHtml(c.text)}</p>
+        </div>
+    `).join('');
+}
+
+function addComment() {
+    const name = els.commentName.value.trim();
+    const text = els.commentText.value.trim();
+    
+    if (!name || !text) {
+        showToast('Please enter your name and comment', 'error');
+        return;
+    }
+    
+    const comments = DataStore.get('comments', {});
+    if (!comments[currentPhotoId]) comments[currentPhotoId] = [];
+    
+    comments[currentPhotoId].push({
+        id: generateId(),
+        name,
+        text,
+        date: new Date().toISOString()
+    });
+    
+    DataStore.set('comments', comments);
+    
+    els.commentName.value = '';
+    els.commentText.value = '';
+    renderComments();
+    showToast('Comment posted!');
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// ===== Host Dashboard =====
+const HOST_PASSWORD = 'SADp8161';
+
+function openLoginModal() {
+    els.loginModal.classList.add('active');
+    els.loginPassword.value = '';
+    els.loginError.classList.remove('active');
+    setTimeout(() => els.loginPassword.focus(), 100);
+}
+
+function closeLoginModal() {
+    els.loginModal.classList.remove('active');
+}
+
+function handleLogin(e) {
+    e.preventDefault();
+    const password = els.loginPassword.value;
+    
+    if (password === HOST_PASSWORD) {
+        closeLoginModal();
+        openDashboard();
+        showToast('Welcome, Host!');
+    } else {
+        els.loginError.classList.add('active');
+        els.loginPassword.value = '';
+        els.loginPassword.focus();
+    }
+}
+
+function openDashboard() {
+    els.dashboard.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    renderManageGallery();
+    renderManageComments();
+}
+
+function closeDashboard() {
+    els.dashboard.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+function switchDashboardTab(tabName) {
+    els.dashNavBtns.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tabName);
+    });
+    els.dashTabs.forEach(tab => {
+        tab.classList.toggle('active', tab.id === `tab-${tabName}`);
+    });
+}
+
+// ===== Upload =====
+function handleFileSelect(e) {
+    const files = Array.from(e.target.files || e.dataTransfer?.files || []);
+    if (files.length === 0) return;
+    
+    uploadedFiles = files;
+    els.uploadPreview.innerHTML = '';
+    
+    files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const img = document.createElement('img');
+            img.src = ev.target.result;
+            img.alt = 'Preview';
+            els.uploadPreview.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+async function uploadPhoto() {
+    if (uploadedFiles.length === 0) {
+        showToast('Please select a photo first', 'error');
+        return;
+    }
+    
+    const title = els.uploadTitle.value.trim();
+    const description = els.uploadDesc.value.trim();
+    const category = els.uploadCategory.value;
+    
+    if (!title) {
+        showToast('Please enter a photo title', 'error');
+        return;
+    }
+    
+    const photos = DataStore.get('photos', []);
+    
+    for (const file of uploadedFiles) {
+        const base64 = await fileToBase64(file);
+        photos.push({
+            id: generateId(),
+            src: base64,
+            title,
+            description,
+            category,
+            uploadedAt: new Date().toISOString()
+        });
+    }
+    
+    DataStore.set('photos', photos);
+    
+    // Reset form
+    uploadedFiles = [];
+    els.uploadPreview.innerHTML = '';
+    els.uploadTitle.value = '';
+    els.uploadDesc.value = '';
+    els.uploadCategory.value = 'mammals';
+    
+    renderGallery();
+    renderManageGallery();
+    showToast(`Photo${uploadedFiles.length > 1 ? 's' : ''} uploaded successfully!`);
+}
+
+// ===== Manage Gallery =====
+function renderManageGallery() {
+    const photos = DataStore.get('photos', []);
+    
+    if (photos.length === 0) {
+        els.manageGrid.innerHTML = '<p class="empty-msg">No photos uploaded yet.</p>';
+        return;
+    }
+    
+    els.manageGrid.innerHTML = photos.map(photo => `
+        <div class="manage-item" data-id="${photo.id}">
+            <img src="${photo.src}" alt="${photo.title}">
+            <div class="manage-item-info">
+                <h4>${photo.title}</h4>
+                <p>${photo.category} &bull; ${formatDate(photo.uploadedAt)}</p>
+                <div class="manage-item-actions">
+                    <button class="btn-delete" onclick="deletePhoto('${photo.id}')">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function deletePhoto(photoId) {
+    if (!confirm('Are you sure you want to delete this photo?')) return;
+    
+    let photos = DataStore.get('photos', []);
+    photos = photos.filter(p => p.id !== photoId);
+    DataStore.set('photos', photos);
+    
+    // Clean up related data
+    const comments = DataStore.get('comments', {});
+    delete comments[photoId];
+    DataStore.set('comments', comments);
+    
+    const likes = DataStore.get('likes', {});
+    delete likes[photoId];
+    DataStore.set('likes', likes);
+    
+    const likedPhotos = DataStore.get('liked_photos', []);
+    DataStore.set('liked_photos', likedPhotos.filter(id => id !== photoId));
+    
+    renderGallery();
+    renderManageGallery();
+    renderManageComments();
+    showToast('Photo deleted');
+}
+
+// ===== Manage Comments =====
+function renderManageComments() {
+    const comments = DataStore.get('comments', {});
+    const photos = DataStore.get('photos', []);
+    
+    let allComments = [];
+    Object.entries(comments).forEach(([photoId, photoComments]) => {
+        const photo = photos.find(p => p.id === photoId);
+        photoComments.forEach(c => {
+            allComments.push({ ...c, photoId, photoTitle: photo ? photo.title : 'Unknown' });
+        });
+    });
+    
+    allComments.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    if (allComments.length === 0) {
+        els.commentsManageList.innerHTML = '<p class="empty-msg">No comments yet.</p>';
+        return;
+    }
+    
+    els.commentsManageList.innerHTML = allComments.map(c => `
+        <div class="comment-manage-item">
+            <div class="comment-manage-content">
+                <p class="comment-photo"><i class="fas fa-image"></i> ${c.photoTitle}</p>
+                <p class="comment-author">${escapeHtml(c.name)}</p>
+                <p class="comment-text">${escapeHtml(c.text)}</p>
+                <p class="comment-date" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 5px;">${formatDate(c.date)}</p>
+            </div>
+            <div class="comment-manage-actions">
+                <button class="btn-delete" onclick="deleteComment('${c.photoId}', '${c.id}')">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function deleteComment(photoId, commentId) {
+    if (!confirm('Delete this comment?')) return;
+    
+    const comments = DataStore.get('comments', {});
+    if (comments[photoId]) {
+        comments[photoId] = comments[photoId].filter(c => c.id !== commentId);
+        DataStore.set('comments', comments);
+    }
+    
+    renderManageComments();
+    if (currentPhotoId === photoId) renderComments();
+    showToast('Comment deleted');
+}
+
+// ===== Appearance =====
+async function handleBgUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const base64 = await fileToBase64(file);
+    const settings = DataStore.get('settings', {});
+    settings.bgImage = base64;
+    DataStore.set('settings', settings);
+    
+    applySettings();
+    showToast('Background image updated');
+}
+
+function removeBgImage() {
+    const settings = DataStore.get('settings', {});
+    settings.bgImage = null;
+    DataStore.set('settings', settings);
+    applySettings();
+    showToast('Background image removed');
+}
+
+function applyBgColor() {
+    const color = els.bgColorPicker.value;
+    const settings = DataStore.get('settings', {});
+    settings.bgColor = color;
+    DataStore.set('settings', settings);
+    applySettings();
+    showToast('Background color applied');
+}
+
+function updateOverlay() {
+    const opacity = els.overlayOpacity.value;
+    els.overlayValue.textContent = `${opacity}%`;
+    
+    const settings = DataStore.get('settings', {});
+    settings.overlayOpacity = parseInt(opacity);
+    DataStore.set('settings', settings);
+    applySettings();
+}
+
+// ===== Website Info =====
+function saveWebsiteInfo() {
+    const settings = DataStore.get('settings', {});
+    settings.title = els.infoTitle.value.trim();
+    settings.tagline = els.infoTagline.value.trim();
+    settings.about = els.infoAbout.value.trim();
+    settings.phone = els.infoPhone.value.trim();
+    settings.instagram = els.infoInstagram.value.trim();
+    
+    DataStore.set('settings', settings);
+    applySettings();
+    showToast('Website information saved');
+}
+
+// ===== Share =====
+async function shareWebsite() {
+    const shareData = {
+        title: 'Sesath Photography',
+        text: 'Check out Sesath Photography - Stunning wildlife photography from Sri Lanka!',
+        url: window.location.href
+    };
+    
+    if (navigator.share) {
+        try {
+            await navigator.share(shareData);
+        } catch (err) {
+            if (err.name !== 'AbortError') {
+                copyToClipboard(window.location.href);
+            }
+        }
+    } else {
+        copyToClipboard(window.location.href);
+    }
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('Website URL copied to clipboard!');
+    }).catch(() => {
+        // Fallback
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        showToast('Website URL copied to clipboard!');
+    });
+}
+
+// ===== Mobile Menu =====
+function toggleMobileMenu() {
+    els.mobileMenu.classList.toggle('active');
+}
+
+// ===== Filter =====
+function setFilter(category) {
+    currentFilter = category;
+    els.filterBtns.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.filter === category);
+    });
+    renderGallery();
+}
+
+// ===== Event Listeners =====
+document.addEventListener('DOMContentLoaded', () => {
+    initData();
+    applySettings();
+    renderGallery();
+    
+    // Navigation
+    els.hostLoginBtn.addEventListener('click', openLoginModal);
+    els.loginClose.addEventListener('click', closeLoginModal);
+    els.loginForm.addEventListener('submit', handleLogin);
+    els.dashboardClose.addEventListener('click', closeDashboard);
+    els.logoutBtn.addEventListener('click', () => {
+        closeDashboard();
+        showToast('Logged out');
+    });
+    
+    // Dashboard tabs
+    els.dashNavBtns.forEach(btn => {
+        btn.addEventListener('click', () => switchDashboardTab(btn.dataset.tab));
+    });
+    
+    // Lightbox
+    els.lightboxClose.addEventListener('click', closeLightbox);
+    els.lightboxPrev.addEventListener('click', () => navigateLightbox('prev'));
+    els.lightboxNext.addEventListener('click', () => navigateLightbox('next'));
+    els.lightboxLike.addEventListener('click', toggleLike);
+    els.lightboxCommentToggle.addEventListener('click', () => {
+        els.lightboxComments.classList.toggle('active');
+    });
+    els.commentSubmit.addEventListener('click', addComment);
+    
+    // Upload
+    els.uploadArea.addEventListener('click', () => els.photoInput.click());
+    els.uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        els.uploadArea.style.borderColor = 'var(--primary)';
+    });
+    els.uploadArea.addEventListener('dragleave', () => {
+        els.uploadArea.style.borderColor = '';
+    });
+    els.uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        els.uploadArea.style.borderColor = '';
+        handleFileSelect(e);
+    });
+    els.photoInput.addEventListener('change', handleFileSelect);
+    els.uploadSubmit.addEventListener('click', uploadPhoto);
+    
+    // Appearance
+    els.bgUploadArea.addEventListener('click', () => els.bgInput.click());
+    els.bgInput.addEventListener('change', handleBgUpload);
+    els.removeBgBtn.addEventListener('click', removeBgImage);
+    els.applyBgColor.addEventListener('click', applyBgColor);
+    els.bgColorPicker.addEventListener('input', (e) => {
+        els.bgColorValue.textContent = e.target.value;
+    });
+    els.overlayOpacity.addEventListener('input', updateOverlay);
+    
+    // Info
+    els.saveInfoBtn.addEventListener('click', saveWebsiteInfo);
+    
+    // Share
+    els.shareBtn.addEventListener('click', shareWebsite);
+    
+    // Mobile menu
+    els.mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+    document.querySelectorAll('.mobile-link').forEach(link => {
+        link.addEventListener('click', () => els.mobileMenu.classList.remove('active'));
+    });
+    
+    // Filters
+    els.filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => setFilter(btn.dataset.filter));
+    });
+    
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (!els.lightbox.classList.contains('active')) return;
+        
+        if (e.key === 'Escape') closeLightbox();
+        if (e.key === 'ArrowLeft') navigateLightbox('prev');
+        if (e.key === 'ArrowRight') navigateLightbox('next');
+    });
+    
+    // Close modal on backdrop click
+    els.loginModal.addEventListener('click', (e) => {
+        if (e.target === els.loginModal) closeLoginModal();
+    });
+    
+    els.lightbox.addEventListener('click', (e) => {
+        if (e.target === els.lightbox) closeLightbox();
+    });
+    
+    // Navbar scroll effect
+    let lastScroll = 0;
+    window.addEventListener('scroll', () => {
+        const currentScroll = window.pageYOffset;
+        const navbar = document.querySelector('.navbar');
+        
+        if (currentScroll > 50) {
+            navbar.style.background = 'rgba(10, 10, 10, 0.95)';
+            navbar.style.boxShadow = '0 2px 20px rgba(0, 0, 0, 0.3)';
+        } else {
+            navbar.style.background = 'rgba(10, 10, 10, 0.85)';
+            navbar.style.boxShadow = 'none';
+        }
+        
+        lastScroll = currentScroll;
+    });
+});
+'''
+
+with open(os.path.join(output_dir, "script.js"), "w", encoding="utf-8") as f:
+    f.write(script_js)
+
+print("script.js created successfully!")
+print("\nAll three files have been created in /mnt/agents/output/")
